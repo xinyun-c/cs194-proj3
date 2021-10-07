@@ -1,0 +1,234 @@
+<!DOCTYPE html PUBLIC "-//W3C//Ddiv XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/Ddiv/xhtml1-strict.ddiv">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+  <head>
+    <title>CS 194 PROJECT 3</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <link href="style.css" rel="stylesheet" />
+  </head>
+
+  <body>
+    <header>
+      <h1>CS 194-26: Intro to Computer Vision and Computational Photography, Fall 2021</h1>
+      <h1>Project 3: Face Morphing</h1>
+      <h2>By Xinyun Cao</h2>
+
+      <div class="table-of-contents">
+        <ul>
+          <li>
+            <a href="#part1">Part 1 Defining Correspondences</a>
+          </li>
+          <li>
+            <a href="#part2">Part 2: Computing the "Mid-way Face"</a>
+          </li>
+          <li>
+            <a href="#part3">Part 3: The Morph Sequence"</a>
+          </li>
+          <li>
+            <a href="#part4">Part 4: The "Mean face" of a population</a>
+          </li>
+          <li>
+            <a href="#part5">Part 5: Caricatures - Extrapolating from the mean</a>
+          </li>
+          <li>
+            <a href="#part6">Part 6: Bells and Whistles - Visual Lip-syncing</a>
+          </li>
+          <li>
+            <a href="#part6">Part 7: Bells and Whistles - Haus Music Vid</a>
+          </li>
+        </ul>
+      </div>
+      <!-- end table of contents -->
+    </header>
+    <!-- END PAGE HEADER -->
+
+    <br class="spacer" />
+
+    <!-- START PAGE CONTENT -->
+    <div class="content">
+      <div class="part" id="overview">
+        <h2>Overview</h2>
+        <!-- Give a high-level overview of what you implemented in this project. Think about what you've built as a whole.
+              Share your thoughts on what interesting things you've learned from completing the project. -->
+        <p>In this project, we used keypoints and affine transformations to morph different faces into each other through a sequence of mid-way faces.</p>
+      </div>
+      <!-- END OVERVIEW -->
+
+      <!--Start Part 1-->
+      <div class="part" id="part1">
+        <h2>Part 1 Defining Correspondences</h2>
+        <p>In this part, I implemented code for selecting facial keypoints and created a triangulation mesh of these points.</p>
+        <h4>Algorithm Explain</h4>
+        <p>First, using <code>ginput</code> from the <code>matplotlib</code> library, I selected 59 keypoints for each face. I distribute the keypoints so that they represent the features in the face evenly.</p>
+        <p>Then, I took the average position of the two sets of keypoints, and input it into scipy's <code>delaunay</code> function. This way, we get the most ideal triangulation of the inputs.</p>
+        <p>We then could simply show the image and plot the triangles with indexes in the <code>tri.simplices</code> that the Delaunay function returned, and we get images below:</p>
+        <h4>Result Showcase</h4>
+        <div class="row">
+          <div class="column">
+            <img src="input/tri_george.jpg" alt="tri_george" style="width:100%">
+            <figcaption>triangulation of George</figcaption>
+          </div>
+          <div class="column">
+            <img src="input/tri_me.jpg" alt="tri_me" style="width:100%">
+            <figcaption>triangulation of me</figcaption>
+          </div>
+        </div>
+      </div>
+      <!--End Part 1-->
+
+      <!--Start Part 2-->
+      <div class="part" id="part2">
+        <h2>Part 2: Computing the "Mid-way Face"</h2>
+        <p>In this part, we Computed the midway face using the average shape(keypoints positions), morphing the pixels using the affine transform function and inverse warping, and averaging the pixel value of the two faces warped to mid-way shape to get the final Mid-way Face.</p>
+
+        <h4>Algorithm Explain</h4>
+        <p>In this part, we first split the colored pictures into RGB channels, and operate on each channel, and combine them together in the end.</p>
+        <p>To warp an image from, say, shape defined by keypoint array <code>arr1</code> to a new shape defined by keypoint array <code>avg</code>, we first want to calculate the affine transform from the destination shape <code>avg</code> to the starting shape <code>arr1</code> (note: because we are using inverse warping).</p>
+        <p>We then take each triangle defined in the <code>avg</code> shape and get the index of pixels in it using the <code>geometry</code> function. We then transform the position of all those pixels into the space of <code>arr1</code> using the inverse warping affine function that we got.</p>
+        <p>Next, we do an interpolation using function <code>RectBivariateSpline</code> to mark those pixels using pixel values of the original image corresponding to <code>arr1</code>.</p>
+        <p>After warping both the images to the midway shape using the above procedures, we average out the pixel values of the two warped images to get the final mid-war face.</p>
+        <h4>Result Showcase</h4>
+        <div class="row">
+          <div class="column">
+            <img src="input/george.jpg" alt="george" style="width:100%">
+            <figcaption>Original George Photo</figcaption>
+          </div>
+          <div class="column">
+            <img src="input/me.jpg" alt="me" style="width:100%">
+            <figcaption>Original Me Photo</figcaption>
+          </div>
+        </div>
+        <div class="row">
+          <div class="column">
+            <img src="input/george_mid_shape.jpg" alt="george_mid_shape" style="width:100%">
+            <figcaption>George warped to mid-war shape</figcaption>
+          </div>
+          <div class="column">
+            <img src="input/me_mid_shape.jpg" alt="me_mid_shape" style="width:100%">
+            <figcaption>Me warped to mid-war shape</figcaption>
+          </div>
+          <div class="column">
+            <img src="input/mid_face.jpg" alt="mid_face" style="width:100%">
+            <figcaption>The final mid-way face</figcaption>
+          </div>
+        </div>
+        <p>Note: This is difficult as our eye shape, jawline and hairstyle are very different haha.</p>
+      </div>
+      <!--End Part2-->
+
+      <!--Start Part3-->
+      <div class="part" id="part3">
+        <h2>Part 3: The Morph Sequence</h2>
+        <p>In this part, we make a morph sequence to allow smooth transition from one image to another.</p>
+
+        <h4>Algorithm explain</h4>
+        <p>The code in this part is relatively trivial. for i from 1 to 44, we create a mid-way face shape that has the shape of i/45 of im1 plus (45-i)/45 of im2, and after getting the two morphed faces, also do the final averaging of the pixel values with a i:(45-i) weight. In this way, we form a sequence of morphing images.</p>
+        <h4>Result Showcase (Youtube video link)</h4>
+        <iframe width="560" height="315" src="https://www.youtube.com/embed/MiVxw_D9C20" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+      </div>
+      <!--End Part 3-->
+
+      <!--Start Part4-->
+      <div class="part" id="part4">
+        <h2>Part 4: The "Mean face" of a population</h2>
+        <p>In this part, we try to create the average face, or mean face, of a population.</p>
+
+        <h4>Algorithm Explain</h4>
+        <p>We got the population dataset from the FEI Face Database. Specifically, I used their spatially normalized, black and white, full frontal face image with no smile. I then downloaded their 46 keypoints for each image.</p>
+        <p>I then calculated the average shape using the average of all the keypoints. I then warped the different faces into the average shape. It result in images looking ike these:</p>
+        <div class="row">
+          <div class="column">
+            <img src="input/mid_face1.jpg" alt="mid_face1" style="width:100%">
+            <figcaption>face1 to average shape</figcaption>
+          </div>
+          <div class="column">
+            <img src="input/mid_face3.jpg" alt="mid_face3" style="width:100%">
+            <figcaption>face3 to average shape</figcaption>
+          </div>
+          <div class="column">
+            <img src="input/mid_face4.jpg" alt="mid_face4" style="width:100%">
+            <figcaption>face4 to average shape</figcaption>
+          </div>
+        </div>
+        <div class="row">
+          <div class="column">
+            <img src="input/mid_face82.jpg" alt="mid_face82" style="width:100%">
+            <figcaption>face82 to average shape</figcaption>
+          </div>
+          <div class="column">
+            <img src="input/mid_face83.jpg" alt="mid_face83" style="width:100%">
+            <figcaption>face83 to average shape</figcaption>
+          </div>
+          <div class="column">
+            <img src="input/mid_face84.jpg" alt="mid_face84" style="width:100%">
+            <figcaption>face84 to average shape</figcaption>
+          </div>
+        </div>
+
+        <p>With the average shape calculated and each face morphed to the average shape, we can use the pixel averages among all morphed photos to get the average face. Shown below: </p>
+        <div class="row">
+          <div class="column">
+            <img src="input/average.jpg" alt="average" style="width:100%">
+            <figcaption>The average face of the input population</figcaption>
+          </div>
+        </div>
+        <p>Last but not least, to have some fun, I morphed my own face to the average shape, and also morphed the average face into my face shape. The algorithm is just reusing the steps in part2, but changing it to only one color channel.</p>
+        <div class="row">
+          <div class="column">
+            <img src="input/avg2me.jpg" alt="avg2me" style="width:100%">
+            <figcaption>Average face to the shape of my face.</figcaption>
+          </div>
+          <div class="column">
+            <img src="input/me2avg.jpg" alt="me2avg" style="width:100%">
+            <figcaption>My face morphed to the average shape.</figcaption>
+          </div>
+        </div>
+      </div>
+      <!--End Part 4-->
+
+      <!--Start Part5-->
+      <div class="part" id="part5">
+        <h2>Part 5: Caricatures - Extrapolating from the mean</h2>
+        <p>In this part, we made a caricature of my face using the shape of my face, image of my face, and shape of the average face of the dataset population.</p>
+        <h4>Algorithm Explain</h4>
+        <p>The code in this part is also kind of trivial. I set an <code>alpha</code> value to be 0.5, and set the caricature shape to be <code>(1 + alpha) * my_shape - alpha * avg_shape</code>. This will basically make my face deviate from the average even more. Then we morph the image to the new caricature shape, and result in a caricature image shown below:</p>
+
+        <div class="row">
+          <div class="column">
+            <img src="input/meCaricature.jpg" alt="meCaricature" style="width:100%">
+            <figcaption>The resulting Caricature</figcaption>
+          </div>
+        </div>
+        <p>Note: The dataset is mostly white, so I realized that the caricature is mostly exaggerating my asian features, especially my smiley, monolid eyes and my wide, flat nose shape. I find that pretty interesting.</p>
+      </div>
+      <!--End Part 5-->
+
+      <!--Start Part6-->
+      <div class="part" id="part6">
+        <h2>Part 6: Bells and Whistles - Visual Lip-syncing</h2>
+        <p>In this part, I showcase my Extra Credit work in Visual Lip-syncing. Basically, I took photos of myself with the mouth shape of pronouncing "g", "o", "b", "ea", "r" and "s". I then morphed them from one image to the next in the aforementioned order. This produces a visual lip-sync of me saying "go bears". I think it looks pretty nice and interesting.</p>
+        <iframe width="560" height="315" src="https://www.youtube.com/embed/bFMeSN7Bj00" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+      </div>
+      <!--End Part6-->
+
+      <!--Start Part7-->
+      <div class="part" id="part7">
+        <h2>Part 7: Bells and Whistles - Haus Music Video</h2>
+        <p>In this part, I took photos of my housemates and try to make a morph chain.</p>
+        <p>People in my house also call ourselves toadies, so I accompanied the video with the "Crazy Frog" Song :P It ended up being pretty funny.</p>
+        <p>Huge Shoutout to my lovely housemates who volunteered to be my models. They are <code>Kenny Garcia, Connor Boyd, Koda Slingluff, Claire Combredet, Oona Foley, Lizbeth Ortiz-Pivaral, Nida Sinha, and Jenny Tseng.</code> Love you all<33</p>
+        <iframe width="560" height="315" src="https://www.youtube.com/embed/Fr_S-g8iWzo" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+      </div>
+      <!--End Part7-->
+
+    </div>
+    <!-- END CONTENT -->
+
+    <hr />
+
+    <footer>
+      <a href="#">Back to top</a>
+    </footer>
+  </body>
+
+</html>
